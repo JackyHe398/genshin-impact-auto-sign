@@ -18,8 +18,8 @@ function checkSign() {
     if (!signTime) {
       chrome.storage.sync.set({
         signTime: {
-          hours: 0,
-          minutes: 5,
+          hours: 18,
+          minutes: 0,
         },
       });
       return;
