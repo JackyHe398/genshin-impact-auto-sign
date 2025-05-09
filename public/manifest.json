@@ -4,13 +4,12 @@
   "manifest_version": 3,
   "description": "自動簽到，省去每天還要簽到的麻煩\n每日00:05自動開啟簽到網頁並簽到（可自由調整簽到時間）",
   "background": {
-    "service_worker": "background.js",
     "scripts": ["background.js"]
   },
   "icons": {
     "128": "icon.png"
   },
-  "default_locale": "zh_TW",
+  // "default_locale": "zh_TW",
   // "action": {
   //   "default_icon": "icon.png",
   //   "default_popup": "index.html"
