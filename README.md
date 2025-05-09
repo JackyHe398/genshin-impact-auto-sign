@@ -2,7 +2,13 @@
 
 ## What's different from main fork
 
-Since I am switching from google chrome to mozilla firefox, I would like to migrate this extension. But the time selector is missing in firefox and I am not able to write a new one(I've tried but none of them are working), I removed the popup part from the *manifest.json*. After, time select function will not be available. And I changed the time from 0005 to 1800 for my own convenient. If you need to, you may change it from *backgound.ts* before you build it.
+Since I am switching from google chrome to mozilla firefox, I would like to migrate this extension. But the time selector is missing in firefox and I am not able to write a new one(I've tried but none of them are working), so:
+
+1. I removed the popup part from the *manifest.json*. After, time select function will not be available.
+2. I changed the time from 0005 to 1800 for my own convenient.
+3. Base on that, a lot of the files will not be used. I only included *background.ts, content.ts, icon.png*(respecting original author), and *manifest.json* for smaller file size.
+
+If you need to, you may change it from *backgound.ts* before you build it.
 
 ## Credit and License
 
@@ -11,6 +17,8 @@ All right and credits goes to original author @[oddstab](https://github.com/Jack
 ## To Original author
 
 Thank you for writing such a useful tool. I've tried to upload to firefox developement centre to sign. Unfortunately, I cannot contact you though any methods before doing so. I didn't publish it to addons.mozilla.org because of that. If you think that is inappropriate or for any reason, please contact me to delete it.
+
+
 感謝您的組件。我已經將其提交至firefox平臺簽名，抱歉事前沒辦法以任何手段聯係到您，以徵得您的同意。如果您覺得有任何不妥，或者任何原因，請不吝聯係我刪除。
 
 ## 功能說明
@@ -37,4 +45,3 @@ yarn dist
 3. 選擇 `載入未封裝項目`並選取剛剛的dist資料夾
 
 原神官方論壇 https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481
-
