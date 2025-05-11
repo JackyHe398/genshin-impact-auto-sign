@@ -8,7 +8,6 @@
   },
   "devDependencies": {
     "@types/chrome": "0.0.134",
-    "@types/copy-webpack-plugin": "^6.4.1",
     "@types/node": "^14.14.41",
     "@types/webpack": "^5.28.0",
     "copy-webpack-plugin": "^8.1.1",
@@ -20,6 +19,7 @@
     "zip-webpack-plugin": "^4.0.1"
   },
   "dependencies": {
+    "flatpickr": "^4.6.13",
     "genshin-impact-auto-sign": "file:"
   }
 }
