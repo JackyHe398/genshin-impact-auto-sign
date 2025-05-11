@@ -18,8 +18,11 @@ Since I am switching from google chrome to mozilla firefox, I would like to migr
 
 自動簽到，省去每天還要簽到的麻煩每日00:05自動開啟簽到網頁並簽到（可自由調整簽到時間）
 
+> ![圖片](https://github.com/user-attachments/assets/7dba2f6e-68db-4fbe-849f-f4cf6c18aa39)
+> 
 > 請記得先登入！
-> ![image](https://user-images.githubusercontent.com/44750772/185805452-c57e9930-99a4-4dad-be1b-bf84f706b44a.png)
+
+
 
 ## 安裝 Installation
 
@@ -29,7 +32,7 @@ Since I am switching from google chrome to mozilla firefox, I would like to migr
 
 ### GitHub發佈頁 From GitHub release (Firefox)
 
-1. Download the xmi file
+1. Download the *.xpi* file
 2. Go to [about:addons](about:addons) from firefox
 3. Click *Setting* then *Install Add-on From File...*
 4. Select the file you download
