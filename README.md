@@ -9,13 +9,13 @@ Since I am switching from google chrome to mozilla firefox, I would like to migr
 
 ## Credit and License
 
-All right and credits goes to original author @[oddstab](https://github.com/JackyHe398/genshin-impact-auto-sign/commits?author=oddstab). I reserve no right including the part I change. You may only use the code I change without asking the original author if you need to use commercially.
+All right and credits goes to original author @[oddstab](https://github.com/JackyHe398/genshin-impact-auto-sign/commits?author=oddstab) for the part he/she finished. I reserve all right for the part i modified at the moment. Please contact me if you need to use the code or republish.
 
 ## To Original author
 
-Thank you for writing such a useful tool. I've tried to upload to firefox developement centre to sign. Unfortunately, I cannot contact you though any methods before doing so. I didn't publish it to addons.mozilla.org because of that. If you think that is inappropriate or for any reason, please contact me to delete it.
+Thank you for writing such a useful tool. I've uploaded the extension to firefox developement centre. Unfortunately, I cannot contact you though any methods before doing so. I didn't publish it to addons.mozilla.org because of that. If you think that is inappropriate or for any reason, please contact me to delete it.
 
-感謝您的組件。抱歉在沒看到有附上使用協議和在得到您的答復之前，將其提交至firefox平臺簽名，真的沒辦法以任何手段聯係到您。如果您覺得有任何不妥，或者任何原因，請不吝聯係我刪除和禁用已簽名的版本。
+感謝您的組件。抱歉在沒看到有附上使用協議和在得到您的答復之前，將其上載至firefox平臺，真的沒辦法以任何手段聯係到您。如果您覺得有任何不妥，或者任何原因，請不吝聯係我刪除和禁用上載版本。
 
 ## 功能說明
 
@@ -23,12 +23,6 @@ Thank you for writing such a useful tool. I've tried to upload to firefox develo
 
 > 請記得先登入！
 > ![image](https://user-images.githubusercontent.com/44750772/185805452-c57e9930-99a4-4dad-be1b-bf84f706b44a.png)
-
-### Note from editor
-
-: This function is only available in Chrome version. I removed it from Firefox version because firefox do not provide time selector. The default signing time is still 0005 everyday, you may not change it because the program will sign automatically even if you miss the signing time, so I'll say it's good enough.
-
-If you really need to change it, you may download the source code and edit *background.ts* before compiling. I may add it later, but i am not familiar with js, I will be happy to accept pull request if anyone would like to:).
 
 ## 安裝 Installation
 
@@ -48,7 +42,7 @@ If you really need to change it, you may download the source code and edit *back
 1. clone下來後執行
 
 ```
-yarn add -D webpack
+yarn install
 yarn dist
 ```
 
