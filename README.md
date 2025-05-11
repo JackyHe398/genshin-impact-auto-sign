@@ -48,7 +48,7 @@ If you really need to change it, you may download the source code and edit *back
 1. clone下來後執行
 
 ```
-yarn add -D webpack webpack-cli
+yarn add -D webpack
 yarn dist
 ```
 
