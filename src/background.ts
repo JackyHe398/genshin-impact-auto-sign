@@ -63,7 +63,7 @@ function checkSign() {
         active: false, //開啟分頁時不會focus
       });
       console.log(
-        `Genshin impact auto sign: sign-in triggered at ${now.toLocaleTimeString()}`
+        `sign-in triggered at ${now.toLocaleTimeString()}`
       );
     }
 
