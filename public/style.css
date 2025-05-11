@@ -160,3 +160,19 @@ button:active {
   justify-content: center;
   align-items: center;
 }
+
+#timePicker {
+  display: none; /* hide the textbox */
+}
+
+.flatpickr-time {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px; /* Optional: controls spacing between hour and minute */
+}
+
+.flatpickr-time .numInputWrapper {
+  margin: 0 2px;
+}

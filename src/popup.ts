@@ -1,5 +1,6 @@
 import { getConfig } from "./configHelper";
 import { IConfigType } from "./interface/IConfigType";
+import flatpickr from "flatpickr";
 
 /**
  * 更新簽到時間
@@ -79,4 +80,41 @@ window.addEventListener("load", async () => {
 
   localizeHtmlPage();
   checkIsSignToday();
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // 1) Load your config (make sure this returns { signTime: { hours, minutes } })
+  const config = await getConfig();
+  const h = config.signTime.hours.toString().padStart(2, "0");
+  const m = config.signTime.minutes.toString().padStart(2, "0");
+  const defaultTime = `${h}:${m}`;
+
+  // 2) Find your input
+  const input = document.getElementById("timePicker") as HTMLInputElement;
+  if (!input) {
+    console.warn("Input element with ID 'timePicker' not found.");
+    return;
+  }
+
+  // 3) Initialize Flatpickr
+  const picker = flatpickr(input, {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+    time_24hr: true,
+    inline: true,
+    defaultDate: defaultTime,  // now h and m are defined!
+    onChange: (selectedDates, dateStr) => {
+      const [hours, minutes] = dateStr.split(":").map(Number);
+
+      // log changed time
+      console.log("Selected time:", hours, minutes);
+
+      // save to storage
+      chrome.storage.sync.set({ signTime: { hours, minutes } });
+
+      // mirror Chrome code
+      updateSignTime(hours, minutes);
+    },
+  });
 });
