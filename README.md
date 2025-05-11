@@ -1,12 +1,5 @@
 # 原神官方論壇自動簽到 Firefox Extension
 
-## What's different from main fork
-
-Since I am switching from google chrome to mozilla firefox, I would like to migrate this extension. But the time selector is missing in firefox and I am not able to write a new one(I've tried but none of them are working), so:
-
-1. I removed the popup part from the *manifest.json*. After, time select function will not be available.
-2. Base on that, a lot of the files will not be used. I only included *background.ts, content.ts, icon.png*(respecting original author), and *manifest.json* for smaller file size.
-
 ## Credit and License
 
 All right and credits goes to original author @[oddstab](https://github.com/JackyHe398/genshin-impact-auto-sign/commits?author=oddstab) for the part he/she finished. I reserve all right for the part i modified at the moment. Please contact me if you need to use the code or republish.
@@ -16,6 +9,10 @@ All right and credits goes to original author @[oddstab](https://github.com/Jack
 Thank you for writing such a useful tool. I've uploaded the extension to firefox developement centre. Unfortunately, I cannot contact you though any methods before doing so. I didn't publish it to addons.mozilla.org because of that. If you think that is inappropriate or for any reason, please contact me to delete it.
 
 感謝您的組件。抱歉在沒看到有附上使用協議和在得到您的答復之前，將其上載至firefox平臺，真的沒辦法以任何手段聯係到您。如果您覺得有任何不妥，或者任何原因，請不吝聯係我刪除和禁用上載版本。
+
+## What's different from main fork
+
+Since I am switching from google chrome to mozilla firefox, I would like to migrate this extension. But time selector is missing in firefox so I use flatpickr instead.
 
 ## 功能說明
 
