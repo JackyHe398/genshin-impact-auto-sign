@@ -59,7 +59,6 @@ function localizeHtmlPage() {
 
 window.addEventListener("load", async () => {
   const open = document.querySelector("#open") as HTMLInputElement; //開啟自動簽到
-  const dateInput = document.querySelector("#sign-time-picker") as HTMLInputElement; //日期
   open.addEventListener("change", (e) => {
     const el = e.target as HTMLInputElement;
     chrome.storage.sync.set({
@@ -67,15 +66,9 @@ window.addEventListener("load", async () => {
     });
   });
 
-  dateInput.addEventListener("change", (e) => {
-    const el = e.target as HTMLInputElement;
-    updateSignTime(Number(el.value.split(":")[0]), Number(el.value.split(":")[1]));
-  });
-
   const config = await getConfig();
   const h = config.signTime.hours.toString().padStart(2, "0");
   const m = config.signTime.minutes.toString().padStart(2, "0");
-  dateInput.value = `${h}:${m}`;
   open.checked = Boolean(config.open);
 
   localizeHtmlPage();
@@ -83,38 +76,48 @@ window.addEventListener("load", async () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1) Load your config (make sure this returns { signTime: { hours, minutes } })
+  // ─── 1) OPEN checkbox ────────────────────────────────
+  const open = document.getElementById("open") as HTMLInputElement;
+  if (!open) {
+    console.warn("Checkbox #open not found");
+  } else {
+    // save when toggled
+    open.addEventListener("change", (e) => {
+      chrome.storage.sync.set({ open: (e.target as HTMLInputElement).checked });
+    });
+  }
+
+  // ─── 2) LOAD config & SEED UI ────────────────────────
   const config = await getConfig();
+  if (open) open.checked = Boolean(config.open);
+
+  // ─── 3) TIME-PICKER with Flatpickr ────────────────────
   const h = config.signTime.hours.toString().padStart(2, "0");
   const m = config.signTime.minutes.toString().padStart(2, "0");
   const defaultTime = `${h}:${m}`;
 
-  // 2) Find your input
   const input = document.getElementById("timePicker") as HTMLInputElement;
   if (!input) {
-    console.warn("Input element with ID 'timePicker' not found.");
-    return;
+    console.warn("Input #timePicker not found");
+  } else {
+    flatpickr(input, {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "H:i",
+      time_24hr: true,
+      inline: true,
+      defaultDate: defaultTime,
+      onChange: (_dates, dateStr) => {
+        if (!dateStr) return;
+        const [hours, minutes] = dateStr.split(":").map(Number);
+        console.log("Selected time:", dateStr);
+        chrome.storage.sync.set({ signTime: { hours, minutes } });
+        updateSignTime(hours, minutes);
+      },
+    });
   }
 
-  // 3) Initialize Flatpickr
-  const picker = flatpickr(input, {
-    enableTime: true,
-    noCalendar: true,
-    dateFormat: "H:i",
-    time_24hr: true,
-    inline: true,
-    defaultDate: defaultTime,  // now h and m are defined!
-    onChange: (selectedDates, dateStr) => {
-      const [hours, minutes] = dateStr.split(":").map(Number);
-
-      // log changed time
-      console.log("Selected time:", hours, minutes);
-
-      // save to storage
-      chrome.storage.sync.set({ signTime: { hours, minutes } });
-
-      // mirror Chrome code
-      updateSignTime(hours, minutes);
-    },
-  });
+  // ─── 4) THE REST ──────────────────────────────────────
+  localizeHtmlPage();
+  checkIsSignToday();
 });
