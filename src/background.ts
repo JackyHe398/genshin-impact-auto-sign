@@ -4,6 +4,9 @@ function checkSign() {
   chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
     console.log("start check sign...");
     let { lastDate, open, signTime } = data as IConfigType;
+
+    // ========= data validation start =========
+    // =========================================
     if (!data.urls) {
       chrome.storage.sync.set({
         urls: [],
@@ -22,7 +25,6 @@ function checkSign() {
           minutes: 5,
         },
       });
-      return;
     }
 
     if (typeof open === "undefined") {
@@ -32,14 +34,18 @@ function checkSign() {
       return;
     }
 
-    let h = Number(signTime.hours);
-    let m = Number(signTime.minutes);
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // ========= data validation end =========
 
+    
     let now = new Date(); //目前時間
-    let year = now.getFullYear();
-    let month = now.getMonth();
-    let day = now.getDate();
-    let old = new Date(year, month, day, h, m);
+    
+    const h = +signTime.hours, m = +signTime.minutes;
+    const todayAtHM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+
+    if (!open) return;                          // no need to sign in
+    if (now < todayAtHM) return;                // too early
+    if (now.getDate() === lastDate) return;     // already signed today
 
     /* debug */
     // console.clear();
@@ -49,8 +55,10 @@ function checkSign() {
     // console.log(now.getDate() !== lastDate);
     // console.log(now > old);
 
-    //如果日期不同且大於設定時間的話就自動開網頁簽到
-    if (open && now.getDate() !== lastDate && now > old) {
+
+
+      // firefox 編者注： 已改成每日chrome.alarms, 因此理論上不會重複開啟網頁
+      // 不過暫時還是保留這段程式碼
       //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
       chrome.storage.sync.set({
         lastDate: new Date().getDate(),
@@ -65,13 +73,104 @@ function checkSign() {
       console.log(
         `sign-in triggered at ${now.toLocaleTimeString()}`
       );
-    }
-
+    
     console.log("check done..");
   });
 }
 
-// checkSign();
+function getNextRun(h: number, m: number) {
+  // construct time now and target time for comparison
+  const now = new Date();
+  const todayAtHM = new Date(
+    now.getFullYear(), now.getMonth(), now.getDate(),
+    h, m, 0, 0
+  );
 
-chrome.alarms.create({ periodInMinutes: 1 });
-chrome.alarms.onAlarm.addListener(() => checkSign());
+  // if the time is already past, set the date to tomorrow
+  let date = now.getDate();
+  if (now.getTime() > todayAtHM.getTime()) {
+    date = now.getDate() + 1;
+  };
+
+  // construct the target alarm time
+  const nextRun = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    date,
+    h, m, 0, 0
+  );
+
+  return nextRun;
+}
+
+// create alarm once a day
+function scheduleNext() {
+    chrome.storage.sync.get(["signTime"], (data) => {
+
+      // get signTime
+      let {signTime} = data as IConfigType;
+
+      if (!signTime) {
+        chrome.storage.sync.set({
+          signTime: {
+            hours: 0,
+            minutes: 5,
+          },
+        });
+      }
+      let h = Number(signTime.hours);
+      let m = Number(signTime.minutes);
+      
+      chrome.alarms.clear('dailySignIn', () => {
+        chrome.alarms.create("dailySignIn", {when: getNextRun(h, m).getTime()});
+      });
+      console.log(`Alarm set for ${h}:${m}`);
+});
+}
+
+
+// add alarm and checkSign on install
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  // On a fresh install, run a catch-up
+  if (reason === "install") {
+    checkSign();
+  }
+  scheduleNext();
+});
+
+// set alarm on startup in case unexpected issues
+chrome.runtime.onStartup.addListener(() => {
+  console.log("Browser startup, rescheduling alarm");
+  scheduleNext();
+});
+
+// add alarm and checkSign on update
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes.signTime){
+    console.log("signTime change detected, rescheduling alarm");
+    scheduleNext();
+  }
+});
+
+chrome.alarms.onAlarm.addListener(alarm => {
+  if (alarm.name !== "dailySignIn") {return; }
+  checkSign();
+  console.log("Finished Sign In, rescheduling alarm");
+  scheduleNext();
+});
+
+
+/* Since log in chrome.runtime will not show up in the console
+  use this to check the time of the alarm
+
+chrome.alarms.get("dailySignIn", alarm => {
+  if (!alarm) {
+    console.log("No dailySignIn alarm found");
+  } else {
+    console.log(
+      "dailySignIn will fire next at",
+      new Date(alarm.scheduledTime).toLocaleString()
+    );
+  }
+});
+*/ 
