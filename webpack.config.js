@@ -4,6 +4,10 @@ const path = require("path")
 
 const config = (_, options) => {
   let config = {
+    optimization: {
+      minimize: false
+    },
+    devtool: "source-map",
     entry: {
       background: "./src/background.ts",
       content: "./src/content.ts",

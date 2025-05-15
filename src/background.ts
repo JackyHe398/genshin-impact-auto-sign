@@ -1,77 +1,202 @@
 import { IConfigType } from "./interface/IConfigType";
 
-function checkSign() {
+function initializeDefaults(): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
+      const updates: Record<string, any> = {};
+      const { lastDate, signTime, open } = data as IConfigType;
+
+      /* firefox 編者注： 這段沒看到拿來幹嘛的*/ 
+      // if (typeof data.urls === "undefined") {
+      //   chrome.storage.sync.set({
+      //     urls: [],
+      //   });
+      // }
+
+      if (!lastDate) {
+        console.log("Initialize lastDate");
+        updates.lastDate = new Date().getDate()
+      }
+
+      if (!signTime ||
+          typeof signTime === "undefined" ||
+          typeof signTime.hours === "undefined" ||
+          typeof signTime.minutes === "undefined") {
+        console.log("Initialize signTime");
+        updates.signTime = { hours: 0, minutes: 5 };
+        // continue to check sign for not missing a day
+      }
+
+      if (typeof open === "undefined") {
+        console.log("Initialize open");
+        updates.open = true;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        resolve(); // nothing to update
+      } else {
+        chrome.storage.sync.set(updates, () => resolve());
+      }
+    });
+  });
+}
+
+async function checkSign() {
+  await initializeDefaults();
   chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
-    console.log("start check sign...");
-    let { lastDate, open, signTime } = data as IConfigType;
-    if (!data.urls) {
-      chrome.storage.sync.set({
-        urls: [],
-      });
-    }
-    if (!lastDate) {
-      chrome.storage.sync.set({
-        lastDate: new Date().getDate(), //上次簽到日期
-      });
-    }
-
-    if (!signTime) {
-      chrome.storage.sync.set({
-        signTime: {
-          hours: 0,
-          minutes: 5,
-        },
-      });
-      return;
-    }
-
-    if (typeof open === "undefined") {
-      chrome.storage.sync.set({
-        open: true,
-      });
-      return;
-    }
-
-    let h = Number(signTime.hours);
-    let m = Number(signTime.minutes);
-
     let now = new Date(); //目前時間
-    let year = now.getFullYear();
-    let month = now.getMonth();
-    let day = now.getDate();
-    let old = new Date(year, month, day, h, m);
+    console.log(`${now.toLocaleTimeString()} start check sign`);
 
-    /* debug */
+    // construct time now and target time for comparison
+    let { lastDate, open, signTime } = data as IConfigType;
+    const h = +signTime.hours,
+          m = +signTime.minutes;
+    const todayAtHM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+
+    // condition check
+    if (!open){
+      console.log("Sign-in failed: disabled");
+      return;
+    };
+    if (now < todayAtHM) {
+      console.log("Sign-in failed: Not yet time to sign in");
+      return;
+    };;                // 
+    if (now.getDate() === lastDate) {
+      console.log("Sign-in failed: Signed today");
+      return;
+    };;     // already signed today
+
+    // region - debug
     // console.clear();
     // console.log(data);
     // console.log("currentDate:", now);
     // console.log(now.getDate(), lastDate);
     // console.log(now.getDate() !== lastDate);
-    // console.log(now > old);
+    // endregion
 
-    //如果日期不同且大於設定時間的話就自動開網頁簽到
-    if (open && now.getDate() !== lastDate && now > old) {
-      //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
-      chrome.storage.sync.set({
-        lastDate: new Date().getDate(),
-      });
 
-      //開啟米哈遊的簽到頁面
-      //這邊不需要做任何簽到動作，因為content.ts裡面已經設定只要開啟米哈遊網頁就會自動簽到了
-      chrome.tabs.create({
-        url: "https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481",
-        active: false, //開啟分頁時不會focus
-      });
-      console.log(
-        `sign-in triggered at ${now.toLocaleTimeString()}`
-      );
-    }
+    /* firefox 編者注： 
+    已改成每日chrome.alarms，
+    因此理論上不會重複開啟網頁，不過暫時還是保留這段程式碼，
+    瀏覽器有limit，有需要請移除或注釋掉*/
+    //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
+    chrome.storage.sync.set({lastDate: new Date().getDate(),});
 
-    console.log("check done..");
+    //開啟米哈遊的簽到頁面
+    //這邊不需要做任何簽到動作，因為content.ts裡面已經設定只要開啟米哈遊網頁就會自動簽到了
+    chrome.tabs.create({
+      url: "https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481",
+      active: false, //開啟分頁時不會focus
+    });
+
+    console.log(`Sign-in triggered`);
   });
 }
 
-// checkSign();
+// region - functions scheduling
+function getNextRun(h: number, m: number) {
+  // construct time now and target time for comparison
+  const now = new Date();
+  const todayAtHM = new Date(
+    now.getFullYear(), now.getMonth(), now.getDate(),
+    h, m, 0, 0
+  );
 
-chrome.alarms.create({ periodInMinutes: 1 });
-chrome.alarms.onAlarm.addListener(() => checkSign());
+  // if the time is already past, set the date to tomorrow
+  let date = now.getDate();
+  if (now.getTime() > todayAtHM.getTime()) {
+    date = now.getDate() + 1;
+  };
+
+  // construct the target alarm time
+  const nextRun = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    date,
+    h, m, 0, 0
+  );
+
+  return nextRun;
+}
+
+
+async function scheduleNext() {
+  await initializeDefaults();
+  // create alarm once a day
+  chrome.storage.sync.get(["signTime"], (data) => {
+
+    // get signTime
+    let {signTime} = data as IConfigType;
+    let h = Number(signTime.hours);
+    let m = Number(signTime.minutes);
+    
+    const nextrun = getNextRun(h, m);
+    chrome.alarms.clear('dailySignIn', () => {
+      chrome.alarms.create("dailySignIn", {when: nextrun.getTime()});
+    });
+    console.log(`Alarm set for ${nextrun.toLocaleDateString() + ' ' +nextrun.toLocaleTimeString()}`);
+  });
+}
+// endregion
+
+// region - main and event listeners
+async function performScheduledSign() {
+  try {
+    await checkSign();
+    scheduleNext();
+  } catch (err) {
+    console.error("Sign or schedule failed:", err);
+  }
+}
+
+
+chrome.runtime.onInstalled.addListener(({reason}) => {
+  if (reason === "install") { // On a fresh install, run a catch-up
+    console.log("==Fresh Install==");
+    scheduleNext();
+  }
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  console.log("==Browser startup==");
+  performScheduledSign();
+});
+
+chrome.runtime.onMessage.addListener((msg, sender, _sendResponse) => {
+  if (msg.action === "performScheduledSign") {
+    console.log("==SignTime changed==");
+    performScheduledSign(); // No response needed
+    // No `return true`
+  }
+});
+
+chrome.alarms.onAlarm.addListener(alarm => {
+  if (alarm.name !== "dailySignIn") {return; }
+    console.log("==Alarm triggered==");
+    performScheduledSign();
+});
+// endregion
+
+/* region - debugging 
+    // check the time of the alarm
+    // Since log in chrome.runtime will not show up in the console
+    chrome.alarms.get("dailySignIn", alarm => {
+      if (!alarm) {
+        console.log("No dailySignIn alarm found");
+      } else {
+        console.log(
+          "dailySignIn will fire next at",
+          new Date(alarm.scheduledTime).toLocaleString()
+        );
+      }
+    });
+
+    // reset the lastDate
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    chrome.storage.sync.set({ lastDate: yesterday.getDate() }, () => {
+      console.log(`✅ Debug: lastDate set to yesterday (${yesterday.getDate()})`);
+    });
+
+endregion*/ 
