@@ -1,35 +1,43 @@
 import { IConfigType } from "./interface/IConfigType";
 
-function initializeDefaults() {
-  chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
-    let { lastDate, open, signTime } = data as IConfigType;
+function initializeDefaults(): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
+      const updates: Record<string, any> = {};
+      const { lastDate, signTime, open } = data as IConfigType;
 
-    if (!data.urls) {
-      chrome.storage.sync.set({
-        urls: [],
-      });
-    }
-    if (!lastDate) {
-      chrome.storage.sync.set({
-        lastDate: new Date().getDate(), //上次簽到日期
-      });
-    }
+      /* firefox 編者注： 這段沒看到拿來幹嘛的*/ 
+      // if (typeof data.urls === "undefined") {
+      //   chrome.storage.sync.set({
+      //     urls: [],
+      //   });
+      // }
 
-    if (!signTime) {
-      chrome.storage.sync.set({
-        signTime: {
-          hours: 0,
-          minutes: 5,
-        },
-      });
-      // continue to check sign for not missing a day
-    }
+      if (!lastDate) {
+        console.log("Initialize lastDate");
+        updates.lastDate = new Date().getDate()
+      }
 
-    if (typeof open === "undefined") {
-      chrome.storage.sync.set({
-        open: true,
-      });
-    }
+      if (!signTime ||
+          typeof signTime === "undefined" ||
+          typeof signTime.hours === "undefined" ||
+          typeof signTime.minutes === "undefined") {
+        console.log("Initialize signTime");
+        updates.signTime = { hours: 0, minutes: 5 };
+        // continue to check sign for not missing a day
+      }
+
+      if (typeof open === "undefined") {
+        console.log("Initialize open");
+        updates.open = true;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        resolve(); // nothing to update
+      } else {
+        chrome.storage.sync.set(updates, () => resolve());
+      }
+    });
   });
 }
 
@@ -46,9 +54,18 @@ async function checkSign() {
     const todayAtHM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
 
     // condition check
-    if (!open) return;                          // no need to sign in
-    if (now < todayAtHM) return;                // too early
-    if (now.getDate() === lastDate) return;     // already signed today
+    if (!open){
+      console.log("Sign-in failed: disabled");
+      return;
+    };
+    if (now < todayAtHM) {
+      console.log("Sign-in failed: Not yet time to sign in");
+      return;
+    };;                // 
+    if (now.getDate() === lastDate) {
+      console.log("Sign-in failed: Signed today");
+      return;
+    };;     // already signed today
 
     // region - debug
     // console.clear();
@@ -73,7 +90,7 @@ async function checkSign() {
       active: false, //開啟分頁時不會focus
     });
 
-    console.log(`sign-in triggered`);
+    console.log(`Sign-in triggered`);
   });
 }
 
@@ -111,61 +128,59 @@ async function scheduleNext() {
 
     // get signTime
     let {signTime} = data as IConfigType;
-
-    if (!signTime) {
-      chrome.storage.sync.set({
-        signTime: {
-          hours: 0,
-          minutes: 5,
-        },
-      });
-    }
     let h = Number(signTime.hours);
     let m = Number(signTime.minutes);
     
+    const nextrun = getNextRun(h, m);
     chrome.alarms.clear('dailySignIn', () => {
-      chrome.alarms.create("dailySignIn", {when: getNextRun(h, m).getTime()});
+      chrome.alarms.create("dailySignIn", {when: nextrun.getTime()});
     });
-    console.log(`Alarm set for ${h}:${m}`);
+    console.log(`Alarm set for ${nextrun.toLocaleDateString() + ' ' +nextrun.toLocaleTimeString()}`);
   });
 }
 // endregion
 
-// region - main: Listener
-// add alarm and checkSign on install
-chrome.runtime.onInstalled.addListener(({ reason }) => {
-  if (reason === "install") { // On a fresh install, run a catch-up
-    checkSign();
-  }
-  scheduleNext();
-});
-
-// set alarm on startup in case unexpected issues
-chrome.runtime.onStartup.addListener(() => {
-  console.log("Browser startup, rescheduling alarm");
-  scheduleNext();
-});
-
-// add alarm and checkSign on update
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "sync" && changes.signTime){
-    console.log("signTime change detected, rescheduling alarm");
+// region - main and event listeners
+async function performScheduledSign() {
+  try {
+    await checkSign();
     scheduleNext();
+  } catch (err) {
+    console.error("Sign or schedule failed:", err);
+  }
+}
+
+
+chrome.runtime.onInstalled.addListener(({reason}) => {
+  if (reason === "install") { // On a fresh install, run a catch-up
+    console.log("==Fresh Install==");
+    scheduleNext();
+  }
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  console.log("==Browser startup==");
+  performScheduledSign();
+});
+
+chrome.runtime.onMessage.addListener((msg, sender, _sendResponse) => {
+  if (msg.action === "performScheduledSign") {
+    console.log("==SignTime changed==");
+    performScheduledSign(); // No response needed
+    // No `return true`
   }
 });
 
 chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name !== "dailySignIn") {return; }
-  checkSign();
-  console.log("Finished Sign In, rescheduling alarm");
-  scheduleNext();
+    console.log("==Alarm triggered==");
+    performScheduledSign();
 });
 // endregion
 
 /* region - debugging 
-    Since log in chrome.runtime will not show up in the console
-    use this to check the time of the alarm
-
+    // check the time of the alarm
+    // Since log in chrome.runtime will not show up in the console
     chrome.alarms.get("dailySignIn", alarm => {
       if (!alarm) {
         console.log("No dailySignIn alarm found");
@@ -176,4 +191,12 @@ chrome.alarms.onAlarm.addListener(alarm => {
         );
       }
     });
+
+    // reset the lastDate
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    chrome.storage.sync.set({ lastDate: yesterday.getDate() }, () => {
+      console.log(`✅ Debug: lastDate set to yesterday (${yesterday.getDate()})`);
+    });
+
 endregion*/ 
