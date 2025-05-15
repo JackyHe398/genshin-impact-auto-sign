@@ -113,6 +113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Selected time:", dateStr);
         chrome.storage.sync.set({ signTime: { hours, minutes } });
         updateSignTime(hours, minutes);
+        chrome.runtime.sendMessage({ action: "performScheduledSign" });
       },
     });
   }
