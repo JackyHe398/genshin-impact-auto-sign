@@ -19,16 +19,15 @@ Since I am switching from google chrome to mozilla firefox, I would like to migr
 自動簽到，省去每天還要簽到的麻煩每日00:05自動開啟簽到網頁並簽到（可自由調整簽到時間）
 
 > ![圖片](https://github.com/user-attachments/assets/7dba2f6e-68db-4fbe-849f-f4cf6c18aa39)
-> 
+>
 > 請記得先登入！
-
-
 
 ## 安裝 Installation
 
-### 應用商店 from Store (Chrome)
+### 應用商店 Store
 
 - [Chrome Web Store](https://chrome.google.com/webstore/detail/ddncbaijlknflhdcijpdblfapjgfnohb?authuser=0&hl=zh-TW) This is the original version from @[oddstab](https://github.com/JackyHe398/genshin-impact-auto-sign/commits?author=oddstab).
+- [Firefox ADD-ONS](https://addons.mozilla.org/en-US/firefox/addon/genshin-impact-auto-sign/)
 
 ### GitHub發佈頁 From GitHub release (Firefox)
 
