@@ -1,53 +1,20 @@
 import { getConfig } from "./configHelper";
+import { checkSignCondition } from "./SignHelper";
 
-export async function checkSignCondition(): Promise<boolean>{
-  let now = new Date(); //目前時間
-  console.log(`${now.toLocaleTimeString()} start check sign`);
-
-  // construct targeted time for comparison
-  let { lastDate, open, signTime } = await getConfig();
-  const h = +signTime.hours,
-        m = +signTime.minutes;
-  const todayAtHM = new Date();
-  todayAtHM.setHours(h, m, 0, 0); // set the target time to today at h:m:0:0
-
-  // condition check
-  if (!open){
-    console.log("Sign-in failed: disabled");
-    return false;
-  };
-  if (now < todayAtHM) {
-    console.log("Sign-in failed: Not yet time to sign in");
-    return false;
-  };
-  if (now.getDate() === lastDate) {
-    console.log("Sign-in failed: Signed today");
-    return false;
-  };
-
-  return true;
-  // region - debug
-  // console.clear();
-  // console.log(data);
-  // console.log("currentDate:", now);
-  // console.log(now.getDate(), lastDate);
-  // console.log(now.getDate() !== lastDate);
-  // endregion
-}
 
 function openSignInPage(){
-    /* firefox 編者注： 
-    已改成每日chrome.alarms，
-    因此理論上不會重複開啟網頁，不過暫時還是保留這段程式碼，
-    瀏覽器有limit，有需要請移除或注釋掉*/
-    //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
-    chrome.storage.sync.set({lastDate: new Date().getDate(),});
-
     //開啟米哈遊的簽到頁面
     //這邊不需要做任何簽到動作，因為content.ts裡面已經設定只要開啟米哈遊網頁就會自動簽到了
+    console.log("Opening sign-in page...");
     chrome.tabs.create({
       url: "https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481",
       active: false, //開啟分頁時不會focus
+    }
+    , (tab) => {
+      if (tab.id !== undefined) {
+        // @ts-ignore
+        chrome.storage.session.set({ [tab.id.toString()]: true });
+      }
     });
 }
 
@@ -124,7 +91,28 @@ chrome.alarms.onAlarm.addListener(alarm => {
 });
 // endregion
 
-/* region - debugging 
+//region 
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg.action === "close_after_check") {
+    if (sender.tab===undefined || sender.tab.id===undefined){
+      return;
+    }
+    const tid = sender.tab.id;
+    // @ts-ignore
+    chrome.storage.session.get(tid.toString(), (result) => {
+      if (result[tid]) {
+        chrome.tabs.remove(tid);
+        // @ts-ignore
+        chrome.storage.session.remove(tid); // <--- clean up
+      }
+    });
+  }
+});
+
+//endregion
+
+// region - debugging 
+(window as any).resetAlarm = function (){
     // check the time of the alarm
     // Since log in chrome.runtime will not show up in the console
     chrome.alarms.get("dailySignIn", alarm => {
@@ -144,5 +132,5 @@ chrome.alarms.onAlarm.addListener(alarm => {
     chrome.storage.sync.set({ lastDate: yesterday.getDate() }, () => {
       console.log(`✅ Debug: lastDate set to yesterday (${yesterday.getDate()})`);
     });
-
-endregion*/ 
+}
+// endregion 
