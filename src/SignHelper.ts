@@ -1,4 +1,5 @@
 import { SignInfo } from "./interface/IConfigType";
+import { getConfig } from "./configHelper";
 import { snakeToCamelCase } from "./utils";
 
 /**
@@ -263,4 +264,39 @@ export class DOMSignHelper {
       childList: true,
     });
   };
+}
+
+export async function checkSignCondition(): Promise<boolean>{
+  let now = new Date(); //目前時間
+  console.log(`${now.toLocaleTimeString()} start check sign`);
+
+  // construct targeted time for comparison
+  let { lastDate, open, signTime } = await getConfig();
+  const h = +signTime.hours,
+        m = +signTime.minutes;
+  const todayAtHM = new Date();
+  todayAtHM.setHours(h, m, 0, 0); // set the target time to today at h:m:0:0
+
+  // condition check
+  if (!open){
+    console.log("Sign-in failed: disabled");
+    return false;
+  };
+  if (now < todayAtHM) {
+    console.log("Sign-in failed: Not yet time to sign in");
+    return false;
+  };
+  if (now.getDate() === lastDate) {
+    console.log("Sign-in failed: Signed today");
+    return false;
+  };
+
+  return true;
+  // region - debug
+  // console.clear();
+  // console.log(data);
+  // console.log("currentDate:", now);
+  // console.log(now.getDate(), lastDate);
+  // console.log(now.getDate() !== lastDate);
+  // endregion
 }

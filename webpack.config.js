@@ -2,11 +2,14 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const ZipWebpackPlugin = require("zip-webpack-plugin");
 const path = require("path")
 
+const stripJsonComments = require("strip-json-comments").default;
+const fs = require("fs");
+
 const config = (_, options) => {
   let config = {
-    // optimization: {
-    //   minimize: false
-    // },
+    optimization: {
+      minimize: false
+    },
     // devtool: "source-map",
     entry: {
       background: "./src/background.ts",
@@ -32,7 +35,14 @@ const config = (_, options) => {
     plugins: [
       new CopyWebpackPlugin({
         patterns: [
-          { from: './public', to: './' }
+          { 
+            from: './public', to: './',
+            globOptions: {ignore: ['**/manifest.jsonc']}, // handled in ManifestTransformPlugin
+          },
+          {
+            from: "public/manifest.jsonc", to: "manifest.json",
+            transform(content) {return stripJsonComments(content.toString());}
+          }
         ]
       }),
     ],
@@ -49,3 +59,4 @@ const config = (_, options) => {
 }
 
 module.exports = config;
+
