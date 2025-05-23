@@ -1,86 +1,38 @@
-import { IConfigType } from "./interface/IConfigType";
+import { getConfig } from "./configHelper";
 
-function initializeDefaults(): Promise<void> {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
-      const updates: Record<string, any> = {};
-      const { lastDate, signTime, open } = data as IConfigType;
+export async function checkSignCondition(): Promise<boolean>{
+  let now = new Date(); //目前時間
+  console.log(`${now.toLocaleTimeString()} start check sign`);
 
-      /* firefox 編者注： 這段沒看到拿來幹嘛的*/ 
-      // if (typeof data.urls === "undefined") {
-      //   chrome.storage.sync.set({
-      //     urls: [],
-      //   });
-      // }
+  // construct targeted time for comparison
+  let { lastDate, open, signTime } = await getConfig();
+  const h = +signTime.hours,
+        m = +signTime.minutes;
+  const todayAtHM = new Date();
+  todayAtHM.setHours(h, m, 0, 0); // set the target time to today at h:m:0:0
 
-      if (!lastDate) {
-        console.log("Initialize lastDate");
-        updates.lastDate = new Date().getDate()
-      }
+  // condition check
+  if (!open){
+    console.log("Sign-in failed: disabled");
+    return false;
+  };
+  if (now < todayAtHM) {
+    console.log("Sign-in failed: Not yet time to sign in");
+    return false;
+  };
+  if (now.getDate() === lastDate) {
+    console.log("Sign-in failed: Signed today");
+    return false;
+  };
 
-      if (!signTime ||
-          typeof signTime.hours === "undefined" ||
-          typeof signTime.minutes === "undefined") {
-        console.log("Initialize signTime");
-        updates.signTime = { hours: 0, minutes: 5 };
-      }
-
-      if (typeof open === "undefined") {
-        console.log("Initialize open");
-        updates.open = true;
-      }
-
-      if (Object.keys(updates).length === 0) {
-        resolve(); // nothing to update
-      } else {
-        chrome.storage.sync.set(updates, () => {
-          if (chrome.runtime.lastError) {
-            console.error("Storage set failed:", chrome.runtime.lastError.message);
-          }
-          resolve();
-        });
-      }
-    });
-  });
-}
-
-export function checkSignCondition(): Promise<boolean>{
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
-      let now = new Date(); //目前時間
-      console.log(`${now.toLocaleTimeString()} start check sign`);
-
-      // construct time now and target time for comparison
-      let { lastDate, open, signTime } = data as IConfigType;
-      const h = +signTime.hours,
-            m = +signTime.minutes;
-      const todayAtHM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-
-      // condition check
-      if (!open){
-        console.log("Sign-in failed: disabled");
-        return resolve(false);
-      };
-      if (now < todayAtHM) {
-        console.log("Sign-in failed: Not yet time to sign in");
-        return resolve(false);
-      };
-      if (now.getDate() === lastDate) {
-        console.log("Sign-in failed: Signed today");
-        return resolve(false);
-      };
-
-      return resolve(true);
-      // region - debug
-      // console.clear();
-      // console.log(data);
-      // console.log("currentDate:", now);
-      // console.log(now.getDate(), lastDate);
-      // console.log(now.getDate() !== lastDate);
-      // endregion
-      
-    });
-  });
+  return true;
+  // region - debug
+  // console.clear();
+  // console.log(data);
+  // console.log("currentDate:", now);
+  // console.log(now.getDate(), lastDate);
+  // console.log(now.getDate() !== lastDate);
+  // endregion
 }
 
 function openSignInPage(){
@@ -117,26 +69,24 @@ function getNextRun(h: number, m: number) {
 
 async function scheduleNext() {
   // create alarm once a day
-  chrome.storage.sync.get(["signTime"], (data) => {
+  // get signTime
+  let {signTime} = await getConfig(["signTime"]);
 
-    // get signTime
-    let {signTime} = data as IConfigType;
-    let h = Number(signTime.hours);
-    let m = Number(signTime.minutes);
-    
-    const nextrun = getNextRun(h, m);
-    chrome.alarms.clear('dailySignIn', () => {
-      chrome.alarms.create("dailySignIn", {when: nextrun.getTime()});
-    });
-    console.log(`Alarm set for ${nextrun.toLocaleDateString() + ' ' +nextrun.toLocaleTimeString()}`);
+  let h = Number(signTime.hours);
+  let m = Number(signTime.minutes);
+  
+  const nextrun = getNextRun(h, m);
+  chrome.alarms.clear('dailySignIn', () => {
+    chrome.alarms.create("dailySignIn", {when: nextrun.getTime()});
   });
+  console.log(`Alarm set for ${nextrun.toLocaleDateString() + ' ' +nextrun.toLocaleTimeString()}`);
+
 }
 // endregion
 
 // region - main and event listeners
 async function performScheduledSign() {
   try {
-    await initializeDefaults();
     if(await checkSignCondition()){
       openSignInPage();
     }
