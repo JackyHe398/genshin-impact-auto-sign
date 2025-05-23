@@ -1,28 +1,48 @@
-import { SignHelper } from "./SignHelper";
-import { checkSignCondition } from "./background";
+import { SignHelper, checkSignCondition } from "./SignHelper";
+
+const closetTabAndSetDate = async () => {
+  //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
+  await chrome.storage.sync.set({lastDate: new Date().getDate()});
+  chrome.runtime.sendMessage({ action: "close_after_check" });
+}
 
 const start = async () => {
-  if (!await checkSignCondition()) {
-    return;
-  }
-
+  console.log("Sign-in Started");
   const helper = new SignHelper();
   let resignInfo = await helper.getInfo();
+
+  if(!await checkSignCondition()){
+    // console.log() is in checkSignCondition()
+    await closetTabAndSetDate();
+    return;
+  }
   if (!resignInfo || resignInfo.signed) {
+    console.log("Already signed, quitting...");
+    await closetTabAndSetDate();
     return;
   }
 
   insertMask();
-  helper.sign();
+  let promiseSign = helper.sign();
   await helper.completeTask();
-  helper.resign();
+  let promiseResign = helper.resign();
+
+  await Promise.all([promiseSign, promiseResign]);
   
-  // resign if status of hoyolab shown not signed\
-  resignInfo = await helper.getInfo(); // check again
+  // resign if status of hoyolab shown not signed
+  resignInfo = await helper.getInfo(); // check status again
   if (!resignInfo?.signed) {
-    window.location.reload();
+    console.log("Sign-in Failed, retrying...");
+  }else {
+    console.log("Sign-in Finished");
+    removeMask();
+    await closetTabAndSetDate();
+    return;
   }
 };
+
+// region - mask 
+const MASK_ID = "auto-sign-mask";
 
 const insertMask = () => {
   const maskText = chrome.i18n.getMessage("signing_mask");
@@ -41,9 +61,17 @@ const insertMask = () => {
   `;
 
   let mask = document.createElement("div");
+  mask.id = MASK_ID;
   mask.style.cssText = style;
   mask.innerHTML = maskText;
+
   document.body.appendChild(mask);
 };
+
+const removeMask = () => {
+  const mask = document.getElementById(MASK_ID);
+  if (mask) mask.remove();
+};
+// endregion
 
 start();
