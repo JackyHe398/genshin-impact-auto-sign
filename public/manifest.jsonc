@@ -5,8 +5,8 @@
   "description": "自動簽到，省去每天還要簽到的麻煩\n每日00:05自動開啟簽到網頁並簽到（可自由調整簽到時間）",
   "minimum_chrome_version": "102",
   "background": {
-    "scripts": ["background.js"],
-    "service_worker": "background.js"
+    "scripts": ["background.js"], // firefox
+    "service_worker": "background.js" // chrome
   },
   "icons": {
     "128": "icon.png"
@@ -30,7 +30,7 @@
       "run_at": "document_end"
     }
   ],
-  "browser_specific_settings": {
+  "browser_specific_settings": { // For Firefox
     "gecko": {
       "id": "genshin-auto-sign@JackyHe398",
       "strict_min_version": "109.0"
