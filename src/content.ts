@@ -1,17 +1,24 @@
 import { SignHelper } from "./SignHelper";
+import { checkSignCondition } from "./background";
 
 const start = async () => {
+  if (!await checkSignCondition()) {
+    return;
+  }
+
   const helper = new SignHelper();
-  const resignInfo = await helper.getInfo();
+  let resignInfo = await helper.getInfo();
   if (!resignInfo || resignInfo.signed) {
     return;
   }
 
   insertMask();
+  helper.sign();
   await helper.completeTask();
-  await helper.sign();
-  await helper.resign();
-
+  helper.resign();
+  
+  // resign if status of hoyolab shown not signed\
+  resignInfo = await helper.getInfo(); // check again
   if (!resignInfo?.signed) {
     window.location.reload();
   }

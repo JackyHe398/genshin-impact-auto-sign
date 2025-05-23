@@ -44,7 +44,7 @@ function initializeDefaults(): Promise<void> {
   });
 }
 
-async function checkSign(): Promise<void> {
+export function checkSignCondition(): Promise<boolean>{
   return new Promise((resolve) => {
     chrome.storage.sync.get(["lastDate", "signTime", "open"], (data) => {
       let now = new Date(); //目前時間
@@ -59,17 +59,18 @@ async function checkSign(): Promise<void> {
       // condition check
       if (!open){
         console.log("Sign-in failed: disabled");
-        resolve();
+        return resolve(false);
       };
       if (now < todayAtHM) {
         console.log("Sign-in failed: Not yet time to sign in");
-        resolve();
+        return resolve(false);
       };
       if (now.getDate() === lastDate) {
         console.log("Sign-in failed: Signed today");
-        resolve();
+        return resolve(false);
       };
 
+      return resolve(true);
       // region - debug
       // console.clear();
       // console.log(data);
@@ -77,26 +78,25 @@ async function checkSign(): Promise<void> {
       // console.log(now.getDate(), lastDate);
       // console.log(now.getDate() !== lastDate);
       // endregion
-
-
-      /* firefox 編者注： 
-      已改成每日chrome.alarms，
-      因此理論上不會重複開啟網頁，不過暫時還是保留這段程式碼，
-      瀏覽器有limit，有需要請移除或注釋掉*/
-      //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
-      chrome.storage.sync.set({lastDate: new Date().getDate(),});
-
-      //開啟米哈遊的簽到頁面
-      //這邊不需要做任何簽到動作，因為content.ts裡面已經設定只要開啟米哈遊網頁就會自動簽到了
-      chrome.tabs.create({
-        url: "https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481",
-        active: false, //開啟分頁時不會focus
-      }, () => {
-            console.log("Sign-in triggered");
-            resolve();
-      });
+      
     });
   });
+}
+
+function openSignInPage(){
+    /* firefox 編者注： 
+    已改成每日chrome.alarms，
+    因此理論上不會重複開啟網頁，不過暫時還是保留這段程式碼，
+    瀏覽器有limit，有需要請移除或注釋掉*/
+    //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
+    chrome.storage.sync.set({lastDate: new Date().getDate(),});
+
+    //開啟米哈遊的簽到頁面
+    //這邊不需要做任何簽到動作，因為content.ts裡面已經設定只要開啟米哈遊網頁就會自動簽到了
+    chrome.tabs.create({
+      url: "https://act.hoyolab.com/ys/event/signin-sea-v3/index.html?act_id=e202102251931481",
+      active: false, //開啟分頁時不會focus
+    });
 }
 
 // region - functions scheduling
@@ -137,7 +137,9 @@ async function scheduleNext() {
 async function performScheduledSign() {
   try {
     await initializeDefaults();
-    await checkSign();
+    if(await checkSignCondition()){
+      openSignInPage();
+    }
     scheduleNext();
   } catch (err) {
     console.error("Sign or schedule failed:", err);
