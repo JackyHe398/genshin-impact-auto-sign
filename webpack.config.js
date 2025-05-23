@@ -41,7 +41,7 @@ const config = (_, options) => {
   if (options.mode === "production") {
     config.plugins.push(new ZipWebpackPlugin({
       path: "zip",
-      filename: "dist.zip"
+      filename: "genshin-impact-auto-sign.zip"
     }))
   }
 
