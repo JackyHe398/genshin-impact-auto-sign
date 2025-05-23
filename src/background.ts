@@ -12,7 +12,6 @@ function openSignInPage(){
     }
     , (tab) => {
       if (tab.id !== undefined) {
-        // @ts-ignore
         chrome.storage.session.set({ [tab.id.toString()]: true });
       }
     });
@@ -94,16 +93,15 @@ chrome.alarms.onAlarm.addListener(alarm => {
 //region 
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.action === "close_after_check") {
+    console.log("Closing tab after check");
     if (sender.tab===undefined || sender.tab.id===undefined){
       return;
     }
     const tid = sender.tab.id;
-    // @ts-ignore
     chrome.storage.session.get(tid.toString(), (result) => {
       if (result[tid]) {
         chrome.tabs.remove(tid);
-        // @ts-ignore
-        chrome.storage.session.remove(tid); // <--- clean up
+        chrome.storage.session.remove(tid.toString()); // clean up
       }
     });
   }
@@ -112,7 +110,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 //endregion
 
 // region - debugging 
-(window as any).resetAlarm = function (){
+(self as any).resetAlarm = () => {
     // check the time of the alarm
     // Since log in chrome.runtime will not show up in the console
     chrome.alarms.get("dailySignIn", alarm => {
