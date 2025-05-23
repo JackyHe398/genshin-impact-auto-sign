@@ -2,6 +2,19 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const ZipWebpackPlugin = require("zip-webpack-plugin");
 const path = require("path")
 
+const stripJsonComments = require("strip-json-comments").default;
+const fs = require("fs");
+
+class ManifestTransformPlugin {
+  apply(compiler) {
+    compiler.hooks.beforeRun.tap("ManifestTransformPlugin", () => {
+      const raw = fs.readFileSync("./public/manifest.jsonc", "utf8");
+      const clean = stripJsonComments(raw);
+      fs.writeFileSync("./dist/manifest.json", clean);
+    });
+  }
+}
+
 const config = (_, options) => {
   let config = {
     // optimization: {
@@ -30,9 +43,12 @@ const config = (_, options) => {
       extensions: [".ts", ".js"],
     },
     plugins: [
+      new ManifestTransformPlugin(),
       new CopyWebpackPlugin({
         patterns: [
-          { from: './public', to: './' }
+          { from: './public', to: './',
+            globOptions: {ignore: ['**/manifest.jsonc']} // handled in ManifestTransformPlugin
+          }
         ]
       }),
     ],
