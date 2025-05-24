@@ -4,7 +4,8 @@
   "license": "MIT",
   "scripts": {
     "start": "webpack --watch --mode production",
-    "dist": "webpack --mode production"
+    "dist": "webpack --mode production",
+    "zip-source": "node zip_source.js"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.323",
@@ -20,7 +21,9 @@
     "zip-webpack-plugin": "^4.0.1"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "flatpickr": "^4.6.13",
-    "genshin-impact-auto-sign": "file:"
+    "genshin-impact-auto-sign": "file:",
+    "ignore": "^7.0.4"
   }
 }
