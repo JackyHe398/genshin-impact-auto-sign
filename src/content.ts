@@ -1,8 +1,8 @@
-import { SignHelper, checkSignCondition } from "./SignHelper";
+import { SignHelper } from "./SignHelper";
 
 const closeTabAndSetDate = async () => {
   //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
-  await chrome.storage.sync.set({lastDate: new Date()});
+  await chrome.storage.sync.set({lastDate: new Date().toISOString()});
   chrome.runtime.sendMessage({ action: "close_after_check" });
 }
 
