@@ -1,8 +1,8 @@
 import { SignHelper, checkSignCondition } from "./SignHelper";
 
-const closetTabAndSetDate = async () => {
+const closeTabAndSetDate = async () => {
   //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
-  await chrome.storage.sync.set({lastDate: new Date().getDate()});
+  await chrome.storage.sync.set({lastDate: new Date()});
   chrome.runtime.sendMessage({ action: "close_after_check" });
 }
 
@@ -13,7 +13,7 @@ const start = async () => {
   
   if (!resignInfo || resignInfo.signed) {
     console.log("Already signed, quitting...");
-    await closetTabAndSetDate();
+    await closeTabAndSetDate();
     return;
   }
 
@@ -31,7 +31,7 @@ const start = async () => {
   }else {
     console.log("Sign-in Finished");
     removeMask();
-    await closetTabAndSetDate();
+    await closeTabAndSetDate();
     return;
   }
 };

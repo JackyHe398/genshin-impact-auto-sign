@@ -143,13 +143,20 @@ export class SignHelper {
   }
 
   private async send(url: URL, method: "GET" | "POST" = "GET", body?: any) {
-    let response = await fetch(url.toString(), {
-      referrerPolicy: "strict-origin-when-cross-origin",
-      body: JSON.stringify(body),
-      method: method,
+    const options: RequestInit = {
+      method,
       mode: "cors",
       credentials: "include",
-    });
+      referrerPolicy: "strict-origin-when-cross-origin",
+    };
+
+    // only add body and headers if method is POST
+    if (method === "POST" && body != null) {
+      options.body = JSON.stringify(body);
+      options.headers = { "Content-Type": "application/json" };
+    }
+
+    let response = await fetch(url.toString(), options);
 
     return await response.json();
   }
@@ -286,7 +293,7 @@ export async function checkSignCondition(): Promise<boolean>{
     console.log("Sign-in failed: Not yet time to sign in");
     return false;
   };
-  if (now.getDate() === lastDate) {
+  if (now.getDate() === lastDate.getDate()) {
     console.log("Sign-in failed: Signed today");
     return false;
   };

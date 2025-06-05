@@ -21,7 +21,7 @@ function updateSignTime(h: Number, m: Number) {
  */
 async function checkIsSignToday() {
   const config = await getConfig();
-  const currentDate = new Date().getDate();
+  const currentDate = new Date();
   const el = document.querySelector(".is-sign-today") as HTMLInputElement;
   el.innerHTML =
     config.lastDate === currentDate

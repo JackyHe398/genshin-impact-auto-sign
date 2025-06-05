@@ -1,5 +1,5 @@
 export interface IConfigType {
-  lastDate: number;
+  lastDate: Date;
   signTime: {
     hours: number;
     minutes: number;

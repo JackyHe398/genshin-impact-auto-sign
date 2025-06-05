@@ -127,7 +127,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     // reset the lastDate
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    chrome.storage.sync.set({ lastDate: yesterday.getDate() }, () => {
+    chrome.storage.sync.set({ lastDate: yesterday }, () => {
       console.log(`✅ Debug: lastDate set to yesterday (${yesterday.getDate()})`);
     });
 }

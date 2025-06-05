@@ -5,7 +5,7 @@ const defaultConfig: IConfigType = {
     hours: 0,
     minutes: 5,
   },
-  lastDate: Date.now(),
+  lastDate: new Date(),
   open: true,
 };
 
