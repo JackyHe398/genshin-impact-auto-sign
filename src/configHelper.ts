@@ -5,7 +5,7 @@ const defaultConfig: IConfigType = {
     hours: 0,
     minutes: 5,
   },
-  lastDate: new Date(),
+  lastDate: new Date(0),
   open: true,
 };
 
@@ -20,6 +20,7 @@ export async function getConfig<K extends keyof IConfigType>( // set 'possible o
   return new Promise((resolve) => {
     chrome.storage.sync.get(usedKeys, (data) => {
       const result: Partial<IConfigType> = { ...data };
+      console.log(result.lastDate);
       if (data.lastDate && typeof result.lastDate === "string") {
         result.lastDate = new Date(result.lastDate);
       }
@@ -44,10 +45,10 @@ export const setConfig = async (config: IConfigType): Promise<IConfigType> => {
   return await getConfig();
 };
 
-export const resetConfig = () => {
-  defaultKeys.forEach(async (key) => {
+export const resetConfig = async (): Promise<void> => {
+  for (const key of defaultKeys) {
     await new Promise<void>((resolve) => {
       chrome.storage.sync.remove(key, resolve);
     });
-  });
+  }
 };

@@ -44,19 +44,17 @@ function localizeHtmlPage() {
     }
   });
 
-  const input = document.querySelectorAll("[data-i18n-placeholder]") as NodeListOf<HTMLInputElement>;
-  input.forEach((element) => {
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
     const key = element.getAttribute("data-i18n-placeholder");
     if (key) {
-      element.placeholder = chrome.i18n.getMessage(key);
+      (element as HTMLInputElement).placeholder = chrome.i18n.getMessage(key);
     }
   });
 
-  const title = document.querySelectorAll("[data-i18n-title]") as NodeListOf<HTMLDivElement>;
-  title.forEach((element) => {
+  document.querySelectorAll("[data-i18n-title]").forEach((element) => {
     const key = element.getAttribute("data-i18n-title");
     if (key) {
-      element.title = chrome.i18n.getMessage(key);
+      (element as HTMLElement).title = chrome.i18n.getMessage(key);
     }
   });
 }
@@ -100,11 +98,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const m = config.signTime.minutes.toString().padStart(2, "0");
   const defaultTime = `${h}:${m}`;
 
-  const input = document.getElementById("timePicker") as HTMLInputElement;
-  if (!input) {
+  const timeInput = document.getElementById("timePicker") as HTMLInputElement;
+  if (!timeInput) {
     console.warn("Input #timePicker not found");
   } else {
-    flatpickr(input, {
+    flatpickr(timeInput, {
       enableTime: true,
       noCalendar: true,
       dateFormat: "H:i",
