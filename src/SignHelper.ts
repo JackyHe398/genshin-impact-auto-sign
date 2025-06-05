@@ -293,7 +293,11 @@ export async function checkSignCondition(): Promise<boolean>{
     console.log("Sign-in failed: Not yet time to sign in");
     return false;
   };
-  if (now.getDate() === lastDate.getDate()) {
+  if (
+      now.getFullYear() === lastDate.getFullYear() &&
+      now.getMonth()    === lastDate.getMonth() &&
+      now.getDate()     === lastDate.getDate()
+  ) {
     console.log("Sign-in failed: Signed today");
     return false;
   };

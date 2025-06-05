@@ -28,6 +28,7 @@ const start = async () => {
   resignInfo = await helper.getInfo(); // check status again
   if (!resignInfo?.signed) {
     console.log("Sign-in Failed, retrying...");
+    window.location.reload();
   }else {
     console.log("Sign-in Finished");
     removeMask();

@@ -7,7 +7,7 @@ import flatpickr from "flatpickr";
  * @param h
  * @param m
  */
-function updateSignTime(h: Number, m: Number) {
+function updateSignTime(h: number, m: number) {
   chrome.storage.sync.set({
     signTime: {
       hours: h,
@@ -22,9 +22,13 @@ function updateSignTime(h: Number, m: Number) {
 async function checkIsSignToday() {
   const config = await getConfig();
   const currentDate = new Date();
+  const lastDate   = new Date(config.lastDate); // ensure it's a Date object
   const el = document.querySelector(".is-sign-today") as HTMLInputElement;
+
   el.innerHTML =
-    config.lastDate === currentDate
+    (lastDate.getFullYear() === currentDate.getFullYear() &&
+     lastDate.getMonth()    === currentDate.getMonth() && 
+     lastDate.getDate()     === currentDate.getDate())
       ? chrome.i18n.getMessage("is_signed_today_true")
       : chrome.i18n.getMessage("is_signed_today_false");
 }

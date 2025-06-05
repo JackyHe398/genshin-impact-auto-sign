@@ -19,7 +19,10 @@ export async function getConfig<K extends keyof IConfigType>( // set 'possible o
 
   return new Promise((resolve) => {
     chrome.storage.sync.get(usedKeys, (data) => {
-      const result: Partial<IConfigType> = data;
+      const result: Partial<IConfigType> = { ...data };
+      if (data.lastDate && typeof result.lastDate === "string") {
+        result.lastDate = new Date(result.lastDate);
+      }
 
       for (const key of usedKeys) {
         if (typeof result[key] === "undefined") {
