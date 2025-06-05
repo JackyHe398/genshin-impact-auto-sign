@@ -10,12 +10,7 @@ const start = async () => {
   console.log("Sign-in Started");
   const helper = new SignHelper();
   let resignInfo = await helper.getInfo();
-
-  if(!await checkSignCondition()){
-    // console.log() is in checkSignCondition()
-    await closetTabAndSetDate();
-    return;
-  }
+  
   if (!resignInfo || resignInfo.signed) {
     console.log("Already signed, quitting...");
     await closetTabAndSetDate();
