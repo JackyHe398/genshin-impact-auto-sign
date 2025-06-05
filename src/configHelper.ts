@@ -20,9 +20,13 @@ export async function getConfig<K extends keyof IConfigType>( // set 'possible o
   return new Promise((resolve) => {
     chrome.storage.sync.get(usedKeys, (data) => {
       const result: Partial<IConfigType> = { ...data };
-      console.log(result.lastDate);
-      if (data.lastDate && typeof result.lastDate === "string") {
-        result.lastDate = new Date(result.lastDate);
+      if (data.lastDate && !(data.lastDate instanceof Date)) {
+        if(typeof result.lastDate === "string" || 
+          typeof result.lastDate === "number"){
+          result.lastDate = new Date(result.lastDate);
+        }else {
+          result.lastDate = new Date(0); // fallback to epoch if conversion fails
+        }
       }
 
       for (const key of usedKeys) {
