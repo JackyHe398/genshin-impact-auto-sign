@@ -155,10 +155,18 @@ export class SignHelper {
       options.body = JSON.stringify(body);
       options.headers = { "Content-Type": "application/json" };
     }
-
-    let response = await fetch(url.toString(), options);
-
-    return await response.json();
+    
+    try {
+      const response = await fetch(url.toString(), options);
+      if (!response.ok) {
+        console.error(`Fetch failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+      return await response.json();
+    } catch (err) {
+      console.error("Network or parsing error in send():", err);
+      return null;
+    }
   }
 
   private async delay(s: number): Promise<void> {
@@ -177,13 +185,18 @@ export class DOMSignHelper {
    * @returns
    */
   getSignItems = () => {
-    return new Promise<HTMLDivElement[]>((resolve) => {
-      setInterval(() => {
+    return new Promise<HTMLDivElement[]>((resolve, reject) => {
+      const start = Date.now();
+      const intervalId = setInterval(() => {
         const dom = document.querySelectorAll("div[class*=components-home-assets-__sign-content_---sign-list] > div");
 
-        if (dom) {
-          resolve(Array.from(dom) as HTMLDivElement[]);
-        }
+      if (dom.length > 0) {
+        clearInterval(intervalId);
+        resolve(Array.from(dom) as HTMLDivElement[]);
+      } else if (Date.now() - start > 10_000) {
+        clearInterval(intervalId);
+        reject(new Error("Timed out waiting for sign items"));
+      }
       }, 1000);
     });
   };

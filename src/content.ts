@@ -11,7 +11,10 @@ const start = async () => {
   const helper = new SignHelper();
   let resignInfo = await helper.getInfo();
   
-  if (!resignInfo || resignInfo.signed) {
+  if (resignInfo === null) {
+    console.error("Failed to fetch sign info, reloading page...");
+    window.location.reload();
+  }else if (!resignInfo || resignInfo.signed) {
     console.log("Already signed, quitting...");
     await closeTabAndSetDate();
     return;
