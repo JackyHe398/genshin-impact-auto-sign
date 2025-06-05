@@ -1,4 +1,4 @@
-import { getConfig, resetConfig } from "./configHelper";
+import { getConfig } from "./configHelper";
 import { checkSignCondition } from "./SignHelper";
 
 
@@ -126,7 +126,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     });
 
     // reset the lastDate
-    chrome.storage.sync.set({ lastDate: new Date(0) }, () => {
+    chrome.storage.sync.set({ lastDate: new Date(0).toISOString() }, () => {
       console.log(`✅ Debug: lastDate reset`);
     });
 }
