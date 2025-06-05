@@ -143,15 +143,30 @@ export class SignHelper {
   }
 
   private async send(url: URL, method: "GET" | "POST" = "GET", body?: any) {
-    let response = await fetch(url.toString(), {
-      referrerPolicy: "strict-origin-when-cross-origin",
-      body: JSON.stringify(body),
-      method: method,
+    const options: RequestInit = {
+      method,
       mode: "cors",
       credentials: "include",
-    });
+      referrerPolicy: "strict-origin-when-cross-origin",
+    };
 
-    return await response.json();
+    // only add body and headers if method is POST
+    if (method === "POST" && body != null) {
+      options.body = JSON.stringify(body);
+      options.headers = { "Content-Type": "application/json" };
+    }
+    
+    try {
+      const response = await fetch(url.toString(), options);
+      if (!response.ok) {
+        console.error(`Fetch failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+      return await response.json();
+    } catch (err) {
+      console.error("Network or parsing error in send():", err);
+      return null;
+    }
   }
 
   private async delay(s: number): Promise<void> {
@@ -170,13 +185,18 @@ export class DOMSignHelper {
    * @returns
    */
   getSignItems = () => {
-    return new Promise<HTMLDivElement[]>((resolve) => {
-      setInterval(() => {
+    return new Promise<HTMLDivElement[]>((resolve, reject) => {
+      const start = Date.now();
+      const intervalId = setInterval(() => {
         const dom = document.querySelectorAll("div[class*=components-home-assets-__sign-content_---sign-list] > div");
 
-        if (dom) {
-          resolve(Array.from(dom) as HTMLDivElement[]);
-        }
+      if (dom.length > 0) {
+        clearInterval(intervalId);
+        resolve(Array.from(dom) as HTMLDivElement[]);
+      } else if (Date.now() - start > 10_000) {
+        clearInterval(intervalId);
+        reject(new Error("Timed out waiting for sign items"));
+      }
       }, 1000);
     });
   };
@@ -286,7 +306,11 @@ export async function checkSignCondition(): Promise<boolean>{
     console.log("Sign-in failed: Not yet time to sign in");
     return false;
   };
-  if (now.getDate() === lastDate) {
+  if (
+      now.getFullYear() === lastDate.getFullYear() &&
+      now.getMonth()    === lastDate.getMonth() &&
+      now.getDate()     === lastDate.getDate()
+  ) {
     console.log("Sign-in failed: Signed today");
     return false;
   };

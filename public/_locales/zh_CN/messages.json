@@ -1,0 +1,26 @@
+{
+    "is_signed_today_true": {
+        "message": "今日已签到"
+    },
+    "is_signed_today_false": {
+        "message": "今日未签到"
+    },
+    "checkbox": {
+        "message": "开啟自动签到"
+    },
+    "checkbox_title": {
+        "message": "自动签到开关"
+    },
+    "open_sign_in_page": {
+        "message": "开啟每日签到網頁"
+    },
+    "time_picker_description": {
+        "message": "签到時間設定"
+    },
+    "sign_time_picker": {
+        "message": "签到日期設定"
+    },
+    "signing_mask": {
+        "message": "正在签到...<br/>完成后将自动刷新网页"
+    }
+}

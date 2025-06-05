@@ -1,4 +1,4 @@
-import { getConfig } from "./configHelper";
+import { getConfig, resetConfig } from "./configHelper";
 import { checkSignCondition } from "./SignHelper";
 
 
@@ -25,7 +25,7 @@ function getNextRun(h: number, m: number) {
   nextRun.setHours(h, m, 0, 0);
 
   // if the time is already pasted, set the date to tomorrow
-  if (now.getTime() > nextRun.getTime()) {
+  if (now.getTime() >= nextRun.getTime()) {
     nextRun.setDate(now.getDate() + 1);
   };
 
@@ -63,9 +63,10 @@ async function performScheduledSign() {
 }
 
 
-chrome.runtime.onInstalled.addListener(({reason}) => {
+chrome.runtime.onInstalled.addListener(async ({reason}) => {
   if (reason === "install") { // On a fresh install, run a catch-up
     console.log("==Fresh Install==");
+    await chrome.storage.sync.set({lastDate: new Date(0)}); // reset lastDate
     performScheduledSign();
   }
 });
@@ -125,10 +126,8 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     });
 
     // reset the lastDate
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    chrome.storage.sync.set({ lastDate: yesterday.getDate() }, () => {
-      console.log(`✅ Debug: lastDate set to yesterday (${yesterday.getDate()})`);
+    chrome.storage.sync.set({ lastDate: new Date(0) }, () => {
+      console.log(`✅ Debug: lastDate reset`);
     });
 }
 // endregion 

@@ -1,8 +1,8 @@
 import { SignHelper, checkSignCondition } from "./SignHelper";
 
-const closetTabAndSetDate = async () => {
+const closeTabAndSetDate = async () => {
   //簽到後用目前時間覆蓋掉上次時間，防止重複開啟網頁
-  await chrome.storage.sync.set({lastDate: new Date().getDate()});
+  await chrome.storage.sync.set({lastDate: new Date()});
   chrome.runtime.sendMessage({ action: "close_after_check" });
 }
 
@@ -10,15 +10,13 @@ const start = async () => {
   console.log("Sign-in Started");
   const helper = new SignHelper();
   let resignInfo = await helper.getInfo();
-
-  if(!await checkSignCondition()){
-    // console.log() is in checkSignCondition()
-    await closetTabAndSetDate();
-    return;
-  }
-  if (!resignInfo || resignInfo.signed) {
+  
+  if (resignInfo === null) {
+    console.error("Failed to fetch sign info, reloading page...");
+    window.location.reload();
+  }else if (!resignInfo || resignInfo.signed) {
     console.log("Already signed, quitting...");
-    await closetTabAndSetDate();
+    await closeTabAndSetDate();
     return;
   }
 
@@ -33,10 +31,11 @@ const start = async () => {
   resignInfo = await helper.getInfo(); // check status again
   if (!resignInfo?.signed) {
     console.log("Sign-in Failed, retrying...");
+    window.location.reload();
   }else {
     console.log("Sign-in Finished");
     removeMask();
-    await closetTabAndSetDate();
+    await closeTabAndSetDate();
     return;
   }
 };
