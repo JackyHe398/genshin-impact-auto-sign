@@ -9,6 +9,20 @@ export interface IConfigType {
 
 export type SignInfo = {
   /**
+   * 登入狀態
+   * 
+   * need to state clearly that, message is not under resignInfo.data as other fields do.
+   * It is a top-level field in the response object,
+   * means it should be access by resignInfo.message
+   * instead of resignInfo.data.message
+   * 
+   * known values:
+   * - "OK"
+   * - "Not logged in"
+   */
+  message: string;
+
+  /**
    * ??
    */
   cost: number;

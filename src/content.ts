@@ -14,6 +14,10 @@ const start = async () => {
   if (resignInfo === null) {
     console.error("Failed to fetch sign info, reloading page...");
     window.location.reload();
+  }else if(resignInfo?.message !== "OK") {
+    console.error("Sign-in info error:", resignInfo.message);
+    await closeTabAndSetDate();
+    return;
   }else if (!resignInfo || resignInfo.signed) {
     console.log("Already signed, quitting...");
     await closeTabAndSetDate();

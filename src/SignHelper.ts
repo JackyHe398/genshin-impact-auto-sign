@@ -66,8 +66,17 @@ export class SignHelper {
     const json = await this.send(this.resignInfoPath);
     let result: any = {};
 
-    if (!json || !json.data) {
+    if (!json ||  !json.message) {
+      console.error("Failed to fetch sign info or invalid response format");
       return null;
+    }
+
+    // explicitly set the message, it's not part of the data object
+    result.message = json.message;
+
+    if (!json.data) {
+      console.error("No \"data\" found in sign info response");
+      return result as SignInfo;
     }
 
     Object.entries(json.data).forEach(([key, value]) => {
