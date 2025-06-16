@@ -24,6 +24,7 @@
     "archiver": "^7.0.1",
     "flatpickr": "^4.6.13",
     "genshin-impact-auto-sign": "file:",
-    "ignore": "^7.0.4"
+    "ignore": "^7.0.4",
+    "webpack-sources": "^3.3.2"
   }
 }
